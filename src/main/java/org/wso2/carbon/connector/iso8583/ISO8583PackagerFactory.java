@@ -16,17 +16,28 @@
 
 package org.wso2.carbon.connector.iso8583;
 
+import org.jpos.iso.ISOBasePackager;
 import org.jpos.iso.ISOException;
-import org.jpos.iso.ISOPackager;
 import org.jpos.iso.packager.GenericPackager;
+
+import static org.wso2.carbon.inbound.endpoint.protocol.rabbitmq.RabbitMQUtils.handleException;
 
 public class ISO8583PackagerFactory {
     /**
      * get the ISO Packager
      */
-    public static ISOPackager getPackager() throws ISOException {
-        ISOPackager packager;
-        packager = new GenericPackager(ISO8583Constant.PACKAGER);
+    public static ISOBasePackager getPackager(int headerLength) {
+        ISOBasePackager packager = null;
+        try {
+            headerLength = headerLength > -1 ? headerLength : 0;
+            ClassLoader loader = Thread.currentThread().getContextClassLoader();
+            packager = new GenericPackager(loader.getResourceAsStream(ISO8583Constant.PACKAGER));
+            packager.setHeaderLength(headerLength);
+        } catch (NumberFormatException e) {
+            handleException("One of the properties are of an invalid type", e);
+        } catch (ISOException e) {
+            handleException("Error while get the ISOPackager", e);
+        }
         return packager;
     }
 }
